@@ -69,7 +69,7 @@ public class ApplicationUserServiceImpl implements ApplicationUserService {
        try {
             user = getUserList().stream().filter(x -> x.getUserLogin().equals(login)).findFirst().orElseThrow(()->new Exception());
         } catch (Exception e) {
-            System.out.println("Пользователя с таким логином не сущетсвует");
+            System.out.println("Пользователя с таким логином не существует");
                return false;
         }
             Session session = factory.openSession();
@@ -128,6 +128,7 @@ public class ApplicationUserServiceImpl implements ApplicationUserService {
     @Override
     public UserInfo getUserInfo(String login, String password) throws Exception {
        if (passwordCorrect(login, password)) {
+           System.out.println("Пароль верен");
            UserInfo userInfo;
            Session session = factory.openSession();
                userInfo =  session.createQuery("from UserInfo where user_id = :id", UserInfo.class)
@@ -141,5 +142,10 @@ public class ApplicationUserServiceImpl implements ApplicationUserService {
            session.close();
            return userInfo;
        } else throw new Exception();
+    }
+
+    @Override
+    public void factoryClose() {
+        factory.close();
     }
 }

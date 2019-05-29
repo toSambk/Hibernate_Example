@@ -23,4 +23,6 @@ public interface ApplicationUserService {
 
     UserInfo getUserInfo (String login, String password) throws Exception;
 
+    void factoryClose();
+
 }
