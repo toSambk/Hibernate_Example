@@ -91,6 +91,12 @@ public class Main {
                     }
                     break;
 
+                case 8:
+                   for (int i = 0; i < 1000000; i++) {
+                       service.deleteUser("user" + i);
+                   }
+                    break;
+
                 default:
                     in.close();
                     break first;

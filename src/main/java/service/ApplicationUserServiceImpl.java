@@ -17,10 +17,11 @@ public class ApplicationUserServiceImpl implements ApplicationUserService {
    }
 
     public boolean createUser(String login, String password) {
-        if (getUserList().stream().filter(x-> x.getUserLogin().equals(login)).count() > 0) {
+       if (login == null || password == null) return false;
+       if (getUserList().stream().filter(x-> x.getUserLogin().equals(login)).count() > 0) {
             try {
-                throw new Exception();
-            } catch (Exception e) {
+                throw new MyTestException();
+            } catch (MyTestException e) {
                 System.out.println("Пользователь с таким логином уже существует");
                 return false;
             }
@@ -47,18 +48,20 @@ public class ApplicationUserServiceImpl implements ApplicationUserService {
     @Override
     public boolean updateUser(String newLogin, String oldLogin, String password) {
        User user;
+       if (newLogin == null || oldLogin == null || password == null) return false;
+
        try {
-            user = getUserList().stream().filter(x -> x.getUserLogin().equals(oldLogin)).findFirst().orElseThrow(() -> new Exception());
-        } catch (Exception e) {
+            user = getUserList().stream().filter(x -> x.getUserLogin().equals(oldLogin)).findFirst().orElseThrow(() -> new MyTestException());
+        } catch (MyTestException e) {
             System.out.println("Пользователя с таким логином не существует. Необходимо сначала создать пользователя");
             return false;
         }
         user.setUserLogin(newLogin);
         user.setPassword(password);
         Session session = factory.openSession();
-        session.beginTransaction();
+        Transaction transaction = session.beginTransaction();
         session.update(user);
-        session.getTransaction().commit();
+        transaction.commit();
         session.close();
         return true;
     }
@@ -66,22 +69,24 @@ public class ApplicationUserServiceImpl implements ApplicationUserService {
     @Override
     public boolean deleteUser(String login) {
        User user;
+       if (login == null) return false;
        try {
-            user = getUserList().stream().filter(x -> x.getUserLogin().equals(login)).findFirst().orElseThrow(()->new Exception());
-        } catch (Exception e) {
+            user = getUserList().stream().filter(x -> x.getUserLogin().equals(login)).findFirst().orElseThrow(()->new MyTestException());
+        } catch (MyTestException e) {
             System.out.println("Пользователя с таким логином не существует");
                return false;
         }
             Session session = factory.openSession();
-            session.beginTransaction();
+            Transaction transaction = session.beginTransaction();
             session.delete(user);
-            session.getTransaction().commit();
+            transaction.commit();
             session.close();
             return true;
     }
 
     @Override
-    public User findByLogin(String login) throws Exception {
+    public User findByLogin(String login) throws MyTestException {
+        if (login == null) throw new MyTestException();
         Session session = factory.openSession();
         User user = session.createQuery("from User where userLogin = :login", User.class)
                     .setParameter("login", login)
@@ -90,7 +95,7 @@ public class ApplicationUserServiceImpl implements ApplicationUserService {
                     .findFirst()
                     .orElseThrow(() -> {
                         session.close();
-                        return new Exception();
+                        return new MyTestException();
                     });
         session.close();
         return user;
@@ -106,18 +111,19 @@ public class ApplicationUserServiceImpl implements ApplicationUserService {
 
     @Override
     public boolean passwordCorrect(String login, String password) {
-        User user;
+       if (login == null || password == null) return false;
+       User user;
         Session session = factory.openSession();
         try {
-            user = session.createQuery("from User where login = :login", User.class)
+            user = session.createQuery("from User where userLogin = :login", User.class)
                     .setParameter("login", login)
                     .getResultList()
                     .stream()
                     .findFirst().orElseThrow(() -> {
                         session.close();
-                        return new Exception();
+                        return new MyTestException();
                     });
-        } catch (Exception e) {
+        } catch (MyTestException e) {
             System.out.println("Пользователя с таким логином не существует");
             return false;
         }
@@ -126,26 +132,29 @@ public class ApplicationUserServiceImpl implements ApplicationUserService {
     }
 
     @Override
-    public UserInfo getUserInfo(String login, String password) throws Exception {
+    public UserInfo getUserInfo(String login, String password) throws MyTestException {
        if (passwordCorrect(login, password)) {
            System.out.println("Пароль верен");
            UserInfo userInfo;
            Session session = factory.openSession();
-               userInfo =  session.createQuery("from UserInfo where user_id = :id", UserInfo.class)
+               userInfo =  session
+                       .createQuery("from UserInfo where user_id = :id", UserInfo.class)
                        .setParameter("id", findByLogin(login).getId())
                        .getResultList()
                        .stream()
-                       .findFirst().orElseThrow(() -> {
+                       .findFirst()
+                       .orElseThrow(() -> {
                            session.close();
-                           return new Exception();
+                           return new MyTestException();
                });
            session.close();
            return userInfo;
-       } else throw new Exception();
+       } else throw new MyTestException();
     }
 
     @Override
     public void factoryClose() {
         factory.close();
     }
+
 }
